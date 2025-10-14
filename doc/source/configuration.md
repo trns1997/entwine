@@ -66,7 +66,6 @@ point cloud data.
 | [threads](#threads) | Number of parallel threads |
 | [force](#force) | Force a new build at this output |
 | [dataType](#datatype) | Point cloud data storage type |
-| [hierarchyType](#hierarchytype) | Hierarchy storage type |
 | [span](#span) | Voxel resolution in one dimension |
 | [allowOriginId](#alloworiginid) | Specify per-point source file tracking |
 | [bounds](#bounds) | Dataset bounds |
@@ -76,11 +75,11 @@ point cloud data.
 | [scale](#scale) | Scaling factor for scaled integral coordinates |
 | [run](#run) | Insert a fixed number of files |
 | [subset](#subset) | Run a subset portion of a larger build |
-| [overflowDepth](#overflowdepth) | Depth at which nodes may contain overflow |
 | [maxNodeSize](#maxNodeSize) | Soft point count at which nodes may overflow |
 | [minNodeSize](#minNodeSize) | Soft minimum on the point count of nodes |
 | [cacheSize](#cacheSize) | Number of recently-unused nodes to hold in reserve |
 | [hierarchyStep](#hierarchystep) | Step size at which to split hierarchy files |
+| [laz_14](#laz14) | Write LAZ 1.4 content encoding |
 
 ### input
 
@@ -196,15 +195,6 @@ compressed with [Zstandard](https://facebook.github.io/zstd/) compression.
 { "dataType": "laszip" }
 ```
 
-### hierarchyType
-
-Specification for the hierarchy storage format.  Hierarchy information is
-always stored as JSON, but this field may indicate compression.  Currently
-acceptable values are `json` and `gzip`.
-```json
-{ "hierarchyType": "json" }
-```
-
 ### span
 
 Number of voxels in each spatial dimension which defines the grid size of the
@@ -215,7 +205,8 @@ cubic resolution.
 
 For lossless capability, Entwine inserts an OriginId dimension tracking each
 point back to their original source file.  If this value is present and set to
-`false`, this behavior will be disabled.
+`false`, this behavior will be disabled.  This option is `true` by default, to
+disable it from the command line, use `--noOriginId`.
 
 ### bounds
 
@@ -237,7 +228,7 @@ itself.
 Valid `type` values are: `signed`, `unsigned`, and `float`.
 
 Size values are the number of bytes used for each dimension. For example, an `unsigned` 
-type with size 2 is capable of storing any `uint16` value. Likewise, n `unsigned` type 
+type with size 2 is capable of storing any `uint16` value. Likewise, an `unsigned` type 
 with size 4 is capable of storing any `uint32`.
 
 ```json
@@ -251,11 +242,11 @@ with size 4 is capable of storing any `uint32`.
 }
 ```
 
-### trustHeaders
+### deep
 
 By default, file headers for point cloud formats that contain information like
 number of points and bounds are considered trustworthy.  If file headers are
-known to be incorrect, this value can be set to `false` to require a deep scan
+known to be incorrect, this value can be set to `true` to require a deep scan
 of all the points in each file.
 
 ### absolute
@@ -276,13 +267,13 @@ numbers for non-uniform scaling.
 { "scale": [0.01, 0.01, 0.025] }
 ```
 
-### run
+### limit
 
-If a build should not run to completion of all input files, a `run` count may be
+If a build should not run to completion of all input files, a `limit` may be
 specified to run a fixed maximum number of files.  The build may be continued
 by providing the same `output` value to a later build.
 ```json
-{ "run": 25 }
+{ "limit": 25 }
 ```
 
 ### subset
@@ -296,17 +287,6 @@ the total number of tasks.  The total number of tasks must be a power of 4.
 ```json
 { "subset": { "id": 1, "of": 16 } }
 ```
-
-### overflowDepth
-
-There may be performance benefits by not allowing nodes near the top of the
-octree to contain overflow.  The depth at which overflow may begin is
-specified by this parameter.
-
-### overflowThreshold
-
-For nodes at depths of at least the `overflowDepth`, this parameter specifies
-the threshold at which they will split into bisected child nodes.
 
 ### maxNodeSize
 
@@ -339,6 +319,11 @@ files.  In general, this should be set only for testing purposes as Entwine will
 heuristically determine a value if the output hierarchy is large enough to
 warrant splitting.
 
+# laz14
+
+By default, laszip encoded output will be written as LAS 1.2.  Set `laz_14` to
+`true` to write 1.4 data instead.
+
 
 
 ## Info
@@ -357,7 +342,7 @@ the `info` command, aside from `output`, described below.
 | [srs](#srs) | Output coordinate system |
 | [reprojection](#reprojection) | Coordinate system reprojection |
 | [threads](#threads) | Number of parallel threads |
-| [trustHeaders](#trustheaders) | Specify whether file headers are trustworthy |
+| [deep](#deep) | Specify whether file headers are trustworthy |
 
 ### output (info)
 
